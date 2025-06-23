@@ -675,7 +675,7 @@ func TestGenerateToolSet(t *testing.T) {
 				Tools: []mcp.Tool{
 					{
 						Name:        "getPing",
-						Description: "Note: The API key is handled by the server, no need to provide it. Simple ping endpoint",
+						Description: "Simple ping endpoint",
 						InputSchema: mcp.Schema{Type: "object", Properties: map[string]mcp.Schema{}, Required: []string{}},
 					},
 				},
@@ -701,7 +701,7 @@ func TestGenerateToolSet(t *testing.T) {
 				Tools: []mcp.Tool{
 					{
 						Name:        "getHealth",
-						Description: "Note: The API key is handled by the server, no need to provide it. Simple health check",
+						Description: "Simple health check",
 						InputSchema: mcp.Schema{Type: "object", Properties: map[string]mcp.Schema{}, Required: []string{}},
 					},
 				},
@@ -731,7 +731,7 @@ func TestGenerateToolSet(t *testing.T) {
 				Tools: []mcp.Tool{
 					{
 						Name:        "getPing",
-						Description: "Note: The API key is handled by the server, no need to provide it. Simple ping endpoint",
+						Description: "Simple ping endpoint",
 						InputSchema: mcp.Schema{Type: "object", Properties: map[string]mcp.Schema{}, Required: []string{}},
 					},
 				},
@@ -831,7 +831,7 @@ func TestGenerateToolSet(t *testing.T) {
 				Tools: []mcp.Tool{
 					{
 						Name:        "testParams",
-						Description: "Note: The API key is handled by the server, no need to provide it. Test various params",
+						Description: "Test various params",
 						InputSchema: mcp.Schema{
 							Type: "object",
 							Properties: map[string]mcp.Schema{
@@ -876,7 +876,7 @@ func TestGenerateToolSet(t *testing.T) {
 				Tools: []mcp.Tool{
 					{
 						Name:        "testV2Params",
-						Description: "Note: The API key is handled by the server, no need to provide it. Test V2 params and ref",
+						Description: "Test V2 params and ref",
 						InputSchema: mcp.Schema{
 							Type: "object",
 							Properties: map[string]mcp.Schema{
@@ -919,7 +919,7 @@ func TestGenerateToolSet(t *testing.T) {
 				Tools: []mcp.Tool{
 					{
 						Name:        "processArrays",
-						Description: "Note: The API key is handled by the server, no need to provide it. Process arrays",
+						Description: "Process arrays",
 						InputSchema: mcp.Schema{
 							Type: "object",
 							Properties: map[string]mcp.Schema{
@@ -954,7 +954,7 @@ func TestGenerateToolSet(t *testing.T) {
 				Tools: []mcp.Tool{
 					{
 						Name:        "getArrays",
-						Description: "Note: The API key is handled by the server, no need to provide it. Get arrays",
+						Description: "Get arrays",
 						InputSchema: mcp.Schema{
 							Type: "object",
 							Properties: map[string]mcp.Schema{
@@ -989,7 +989,7 @@ func TestGenerateToolSet(t *testing.T) {
 				Tools: []mcp.Tool{
 					{
 						Name:        "uploadFile",
-						Description: "Note: The API key is handled by the server, no need to provide it. Upload file",
+						Description: "Upload file",
 						InputSchema: mcp.Schema{
 							Type: "object",
 							Properties: map[string]mcp.Schema{

@@ -225,12 +225,9 @@ func generateToolSetV3(doc *openapi3.T, cfg *config.Config) (*mcp.ToolSet, error
 				}
 			}
 
-			// Prepend note about API key handling
-			finalToolDesc := "Note: The API key is handled by the server, no need to provide it. " + toolDesc
-
 			tool := mcp.Tool{
 				Name:        toolName,
-				Description: finalToolDesc,    // Use potentially modified description
+				Description: toolDesc,
 				InputSchema: parametersSchema, // Use InputSchema, assuming it contains combined params/body
 			}
 			toolSet.Tools = append(toolSet.Tools, tool)
@@ -527,12 +524,9 @@ func generateToolSetV2(doc *spec.Swagger, cfg *config.Config) (*mcp.ToolSet, err
 				}
 			}
 
-			// Prepend note about API key handling
-			finalToolDesc := "Note: The API key is handled by the server, no need to provide it. " + toolDesc
-
 			tool := mcp.Tool{
 				Name:        toolName,
-				Description: finalToolDesc,    // Use potentially modified description
+				Description: toolDesc,
 				InputSchema: parametersSchema, // Use InputSchema, assuming it contains combined params/body
 			}
 			toolSet.Tools = append(toolSet.Tools, tool)
