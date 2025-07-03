@@ -165,11 +165,11 @@ func TestHttpMethodPostHandler(t *testing.T) {
 			name: "Valid Tool Call Request (Success)",
 			requestBodyFn: func(connID string) string {
 				return `{
-					"jsonrpc": "2.0", 
-					"method": "tools/call", 
-					"id": "call-post-1", 
-					"params": {"name": "get_user", "arguments": {"user_id": "postUser"}}
-				}`
+                                        "jsonrpc": "2.0",
+                                        "method": "tools/call",
+                                        "id": "call-post-1",
+                                        "params": {"name": "get_user", "arguments": {"user_id": "postUser"}}
+                                }`
 			},
 			expectedSyncStatus: http.StatusAccepted,
 			expectedSyncBody:   "Request accepted, response will be sent via SSE.\n",
@@ -190,10 +190,39 @@ func TestHttpMethodPostHandler(t *testing.T) {
 			},
 		},
 		{
+			name: "Tool Call With Output Schema But Non-JSON Response",
+			requestBodyFn: func(connID string) string {
+				return `{
+                                        "jsonrpc": "2.0",
+                                        "method": "tools/call",
+                                        "id": "call-post-nonjson",
+                                        "params": {"name": "get_user", "arguments": {"user_id": "postUser"}}
+                                }`
+			},
+			expectedSyncStatus: http.StatusAccepted,
+			expectedSyncBody:   "Request accepted, response will be sent via SSE.\n",
+			checkAsyncResponse: func(t *testing.T, resp jsonRPCResponse) {
+				assert.Equal(t, "call-post-nonjson", resp.ID)
+				assert.Nil(t, resp.Error)
+				resultPayload, ok := resp.Result.(ToolResultPayload)
+				require.True(t, ok)
+				assert.False(t, resultPayload.IsError)
+				assert.Nil(t, resultPayload.StructuredContent)
+				require.Len(t, resultPayload.Content, 1)
+				assert.Equal(t, "text", resultPayload.Content[0].Type)
+				assert.Equal(t, "not json\n", resultPayload.Content[0].Text)
+			},
+			mockBackend: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/plain")
+				w.WriteHeader(http.StatusOK)
+				fmt.Fprintln(w, "not json")
+			},
+		},
+		{
 			name: "Valid Tool Call Request (Tool Not Found)",
 			requestBodyFn: func(connID string) string {
 				return `{
-					"jsonrpc": "2.0", 
+                                        "jsonrpc": "2.0",
 					"method": "tools/call", 
 					"id": "call-post-err-1", 
 					"params": {"name": "nonexistent_tool", "arguments": {}}
