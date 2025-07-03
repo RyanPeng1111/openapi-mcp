@@ -79,10 +79,11 @@ type ToolResultContent struct {
 
 // ToolResultPayload represents the structure for the 'result' of a 'tool_result' JSON-RPC response.
 type ToolResultPayload struct {
-	Content    []ToolResultContent `json:"content"`                // Array of content items
-	IsError    bool                `json:"isError"`                // Aligning with gin-mcp
-	Error      *MCPError           `json:"error,omitempty"`        // Detailed error info if IsError is true
-	ToolCallID string              `json:"tool_call_id,omitempty"` // Optional: Can be helpful
+	Content           []ToolResultContent    `json:"content"`                     // Array of content items
+	StructuredContent map[string]interface{} `json:"structuredContent,omitempty"` // Parsed JSON result
+	IsError           bool                   `json:"isError"`                     // Aligning with gin-mcp
+	Error             *MCPError              `json:"error,omitempty"`             // Detailed error info if IsError is true
+	ToolCallID        string                 `json:"tool_call_id,omitempty"`      // Optional: Can be helpful
 }
 
 // --- Server State ---
@@ -850,11 +851,39 @@ func handleToolCallJSONRPC(connID string, req *jsonRPCRequest, toolSet *mcp.Tool
 			} else {
 				// Successful execution
 				resultContent := []ToolResultContent{{Type: "text", Text: string(bodyBytes)}}
-
-				resultPayload = ToolResultPayload{
-					Content:    resultContent,
-					IsError:    false,
-					ToolCallID: fmt.Sprintf("%v", req.ID),
+				structured := make(map[string]interface{})
+				hasSchema := false
+				for _, t := range toolSet.Tools {
+					if t.Name == params.ToolName && (t.OutputSchema.Type != "" || len(t.OutputSchema.Properties) > 0) {
+						hasSchema = true
+						break
+					}
+				}
+				if hasSchema {
+					if err := json.Unmarshal(bodyBytes, &structured); err == nil {
+						resultPayload = ToolResultPayload{
+							Content:           resultContent,
+							StructuredContent: structured,
+							IsError:           false,
+							ToolCallID:        fmt.Sprintf("%v", req.ID),
+						}
+					} else {
+						log.Printf("Failed to parse structured content for tool '%s': %v", params.ToolName, err)
+						resultPayload = ToolResultPayload{
+							Content: resultContent,
+							IsError: true,
+							Error: &MCPError{
+								Message: fmt.Sprintf("tool has an output schema but did not return structured content: %v", err),
+							},
+							ToolCallID: fmt.Sprintf("%v", req.ID),
+						}
+					}
+				} else {
+					resultPayload = ToolResultPayload{
+						Content:    resultContent,
+						IsError:    false,
+						ToolCallID: fmt.Sprintf("%v", req.ID),
+					}
 				}
 			}
 		}

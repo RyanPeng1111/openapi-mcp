@@ -182,11 +182,43 @@ func TestHttpMethodPostHandler(t *testing.T) {
 				require.Len(t, resultPayload.Content, 1)
 				assert.Equal(t, "text", resultPayload.Content[0].Type)
 				assert.Equal(t, "{\"id\":\"postUser\"}\n", resultPayload.Content[0].Text)
+				require.NotNil(t, resultPayload.StructuredContent)
+				assert.Equal(t, map[string]interface{}{"id": "postUser"}, resultPayload.StructuredContent)
 			},
 			mockBackend: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				fmt.Fprintln(w, `{"id":"postUser"}`)
+			},
+		},
+		{
+			name: "Tool Call With Output Schema But Non-JSON Response",
+			requestBodyFn: func(connID string) string {
+				return `{
+                                        "jsonrpc": "2.0",
+                                        "method": "tools/call",
+                                        "id": "call-post-bad-json",
+                                        "params": {"name": "get_user", "arguments": {"user_id": "badJSON"}}
+                                }`
+			},
+			expectedSyncStatus: http.StatusAccepted,
+			expectedSyncBody:   "Request accepted, response will be sent via SSE.\n",
+			checkAsyncResponse: func(t *testing.T, resp jsonRPCResponse) {
+				assert.Equal(t, "call-post-bad-json", resp.ID)
+				assert.Nil(t, resp.Error)
+				resultPayload, ok := resp.Result.(ToolResultPayload)
+				require.True(t, ok)
+				assert.True(t, resultPayload.IsError)
+				require.NotNil(t, resultPayload.Error)
+				assert.Contains(t, resultPayload.Error.Message, "structured content")
+				require.Len(t, resultPayload.Content, 1)
+				assert.Equal(t, "text", resultPayload.Content[0].Type)
+				assert.Equal(t, "not json\n", resultPayload.Content[0].Text)
+			},
+			mockBackend: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				fmt.Fprintln(w, "not json")
 			},
 		},
 		{
