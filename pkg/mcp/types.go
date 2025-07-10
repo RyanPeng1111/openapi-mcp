@@ -78,5 +78,7 @@ type Schema struct {
 	Items       *Schema           `json:"items,omitempty"`      // For type "array"
 	Format      string            `json:"format,omitempty"`     // e.g., "int32", "date-time"
 	Enum        []interface{}     `json:"enum,omitempty"`
+	OneOf       []Schema          `json:"oneOf,omitempty"`
+	Nullable    bool              `json:"nullable,omitempty"`
 	// Add other relevant JSON Schema fields as needed (e.g., minimum, maximum, pattern)
 }
