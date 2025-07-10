@@ -487,6 +487,32 @@ const refResponseV3SpecJSON = `{
   }
 }`
 
+// V3 spec with oneOf schema in request body
+const oneOfV3SpecJSON = `{
+  "openapi": "3.0.0",
+  "info": {"title": "OneOf V3 API", "version": "1.0.0"},
+  "paths": {
+    "/union": {
+      "post": {
+        "operationId": "unionExample",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {"type": "string"},
+                  {"type": "integer"}
+                ]
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "OK"}}
+      }
+    }
+  }
+}`
+
 func TestLoadSwagger(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -774,6 +800,16 @@ func TestGenerateToolSet(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, VersionV2, versionRespV2)
 	specRespV2 := docRespV2.(*spec.Swagger)
+
+	// Load OneOf V3 spec
+	tempDirOneOfV3 := t.TempDir()
+	filePathOneOfV3 := filepath.Join(tempDirOneOfV3, "oneof_v3.json")
+	err = os.WriteFile(filePathOneOfV3, []byte(oneOfV3SpecJSON), 0644)
+	require.NoError(t, err)
+	docOneOfV3, versionOneOfV3, err := LoadSwagger(filePathOneOfV3)
+	require.NoError(t, err)
+	require.Equal(t, VersionV3, versionOneOfV3)
+	specOneOfV3 := docOneOfV3.(*openapi3.T)
 
 	// --- Test Cases ---
 	tests := []struct {
@@ -1191,6 +1227,31 @@ func TestGenerateToolSet(t *testing.T) {
 				},
 				Operations: map[string]mcp.OperationDetail{
 					"getFileV2": {Method: "GET", Path: "/file/{id}", BaseURL: "", Parameters: []mcp.ParameterDetail{{Name: "id", In: "path"}}},
+				},
+			},
+		},
+		{
+			name:        "V3 OneOf Request Body",
+			spec:        specOneOfV3,
+			version:     VersionV3,
+			cfg:         &config.Config{},
+			expectError: false,
+			expectedToolSet: &mcp.ToolSet{
+				Name: "OneOf V3 API", Description: "",
+				Tools: []mcp.Tool{
+					{
+						Name: "unionExample",
+						InputSchema: mcp.Schema{
+							Type: "object",
+							Properties: map[string]mcp.Schema{
+								"requestBody": {OneOf: []mcp.Schema{{Type: "string"}, {Type: "integer"}}},
+							},
+							Required: []string{},
+						},
+					},
+				},
+				Operations: map[string]mcp.OperationDetail{
+					"unionExample": {Method: "POST", Path: "/union", BaseURL: "", Parameters: []mcp.ParameterDetail{}},
 				},
 			},
 		},

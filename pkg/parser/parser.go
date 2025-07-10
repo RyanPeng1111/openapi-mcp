@@ -406,11 +406,27 @@ func openapiSchemaToMCPSchemaV3(oapiSchemaRef *openapi3.SchemaRef, doc *openapi3
 		primaryType = (*oapiSchema.Type)[0]
 	}
 
+	mappedType := mapJSONSchemaType(primaryType)
 	mcpSchema := mcp.Schema{
-		Type:        mapJSONSchemaType(primaryType),
+		Type:        mappedType,
 		Description: oapiSchema.Description,
 		Format:      oapiSchema.Format,
 		Enum:        oapiSchema.Enum,
+		Nullable:    oapiSchema.Nullable,
+	}
+
+	if len(oapiSchema.OneOf) > 0 {
+		if primaryType == "" {
+			mcpSchema.Type = ""
+		}
+		mcpSchema.OneOf = make([]mcp.Schema, 0, len(oapiSchema.OneOf))
+		for i, subRef := range oapiSchema.OneOf {
+			subSchema, err := openapiSchemaToMCPSchemaV3(subRef, doc)
+			if err != nil {
+				return mcp.Schema{}, fmt.Errorf("v3 oneOf[%d]: %w", i, err)
+			}
+			mcpSchema.OneOf = append(mcpSchema.OneOf, subSchema)
+		}
 	}
 
 	switch mcpSchema.Type {
@@ -864,12 +880,36 @@ func swaggerSchemaToMCPSchemaV2(oapiSchema *spec.Schema, definitions spec.Defini
 		primaryType = oapiSchema.Type[0]
 	}
 
+	mappedType := mapJSONSchemaType(primaryType)
 	mcpSchema := mcp.Schema{
-		Type:        mapJSONSchemaType(primaryType),
+		Type:        mappedType,
 		Description: oapiSchema.Description,
 		Format:      oapiSchema.Format,
 		Enum:        oapiSchema.Enum,
+		Nullable:    oapiSchema.Nullable,
 		// TODO: Map V2 constraints (Maximum, Minimum, etc.)
+	}
+
+	if len(oapiSchema.OneOf) > 0 {
+		if primaryType == "" {
+			mcpSchema.Type = ""
+		}
+		mcpSchema.OneOf = make([]mcp.Schema, 0, len(oapiSchema.OneOf))
+		for i := range oapiSchema.OneOf {
+			subSchema, err := swaggerSchemaToMCPSchemaV2(&oapiSchema.OneOf[i], definitions)
+			if err != nil {
+				return mcp.Schema{}, fmt.Errorf("v2 oneOf[%d]: %w", i, err)
+			}
+			mcpSchema.OneOf = append(mcpSchema.OneOf, subSchema)
+		}
+	}
+
+	if !mcpSchema.Nullable {
+		if val, ok := oapiSchema.Extensions["x-nullable"]; ok {
+			if b, ok2 := val.(bool); ok2 {
+				mcpSchema.Nullable = b
+			}
+		}
 	}
 
 	switch mcpSchema.Type {
