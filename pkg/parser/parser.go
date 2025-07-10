@@ -458,6 +458,14 @@ func openapiSchemaToMCPSchemaV3(oapiSchemaRef *openapi3.SchemaRef, doc *openapi3
 			mcpSchema.Description += fmt.Sprintf(" (Original type '%s' unknown or unsupported)", primaryType)
 		}
 	}
+	if mcpSchema.Nullable {
+		base := mcpSchema
+		base.Nullable = false
+		mcpSchema = mcp.Schema{
+			Description: base.Description,
+			OneOf:       append([]mcp.Schema{base}, mcp.Schema{Type: "null"}),
+		}
+	}
 	return mcpSchema, nil
 }
 
@@ -950,6 +958,14 @@ func swaggerSchemaToMCPSchemaV2(oapiSchema *spec.Schema, definitions spec.Defini
 	default:
 		if mcpSchema.Type == "string" && primaryType != "" && primaryType != "string" {
 			mcpSchema.Description += fmt.Sprintf(" (Original type '%s' unknown or unsupported)", primaryType)
+		}
+	}
+	if mcpSchema.Nullable {
+		base := mcpSchema
+		base.Nullable = false
+		mcpSchema = mcp.Schema{
+			Description: base.Description,
+			OneOf:       append([]mcp.Schema{base}, mcp.Schema{Type: "null"}),
 		}
 	}
 	return mcpSchema, nil

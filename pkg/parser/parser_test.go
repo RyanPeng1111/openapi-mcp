@@ -510,6 +510,35 @@ const oneOfV3SpecJSON = `{
         "responses": {"200": {"description": "OK"}}
       }
     }
+}
+}`
+
+// V3 spec with nullable field in response schema
+const nullableRespV3SpecJSON = `{
+  "openapi": "3.0.0",
+  "info": {"title": "Nullable Resp V3 API", "version": "1.0"},
+  "paths": {
+    "/file/{id}": {
+      "get": {
+        "operationId": "getNullable",
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {"path": {"type": "string", "nullable": true}}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }`
 
@@ -810,6 +839,16 @@ func TestGenerateToolSet(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, VersionV3, versionOneOfV3)
 	specOneOfV3 := docOneOfV3.(*openapi3.T)
+
+	// Load Nullable Response V3 spec
+	tempDirNullableV3 := t.TempDir()
+	filePathNullableV3 := filepath.Join(tempDirNullableV3, "nullable_v3.json")
+	err = os.WriteFile(filePathNullableV3, []byte(nullableRespV3SpecJSON), 0644)
+	require.NoError(t, err)
+	docNullableV3, versionNullableV3, err := LoadSwagger(filePathNullableV3)
+	require.NoError(t, err)
+	require.Equal(t, VersionV3, versionNullableV3)
+	specNullableV3 := docNullableV3.(*openapi3.T)
 
 	// --- Test Cases ---
 	tests := []struct {
@@ -1252,6 +1291,26 @@ func TestGenerateToolSet(t *testing.T) {
 				},
 				Operations: map[string]mcp.OperationDetail{
 					"unionExample": {Method: "POST", Path: "/union", BaseURL: "", Parameters: []mcp.ParameterDetail{}},
+				},
+			},
+		},
+		{
+			name:        "V3 Nullable Response",
+			spec:        specNullableV3,
+			version:     VersionV3,
+			cfg:         &config.Config{},
+			expectError: false,
+			expectedToolSet: &mcp.ToolSet{
+				Name: "Nullable Resp V3 API", Description: "",
+				Tools: []mcp.Tool{
+					{
+						Name:         "getNullable",
+						InputSchema:  mcp.Schema{Type: "object", Properties: map[string]mcp.Schema{"id": {Type: "string"}}, Required: []string{"id"}},
+						OutputSchema: mcp.Schema{Type: "object", Properties: map[string]mcp.Schema{"path": {OneOf: []mcp.Schema{{Type: "string"}, {Type: "null"}}}}, Required: []string{}},
+					},
+				},
+				Operations: map[string]mcp.OperationDetail{
+					"getNullable": {Method: "GET", Path: "/file/{id}", BaseURL: "", Parameters: []mcp.ParameterDetail{{Name: "id", In: "path"}}},
 				},
 			},
 		},
