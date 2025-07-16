@@ -9,8 +9,8 @@ on:
 jobs:
   test:
     name: Test
-    # environment: CI
-    runs-on: ubuntu-22.04
+    #environment: CI
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -22,9 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: go mod tidy
+        working-directory: .
 
       - name: Run tests with coverage
         run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+        working-directory: .
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
