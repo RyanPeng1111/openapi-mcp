@@ -9,8 +9,8 @@ on:
 jobs:
   test:
     name: Test
-    #environment: CI
-    runs-on: ubuntu-latest
+    environment: CI
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
