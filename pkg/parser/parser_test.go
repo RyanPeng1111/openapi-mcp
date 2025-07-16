@@ -396,6 +396,25 @@ const fileV2SpecJSON = `{
   }
 }`
 
+// V2 spec with x-mcp-tool-hint extension
+const toolHintV2SpecJSON = `{
+  "swagger": "2.0",
+  "info": {"title": "Hint V2 API", "version": "1.0"},
+  "paths": {
+    "/hint": {
+      "get": {
+        "operationId": "getHintV2",
+        "x-mcp-tool-hint": {
+          "title": "Get Hint",
+          "readOnlyHint": true,
+          "idempotentHint": true
+        },
+        "responses": {"200": {"description": "OK"}}
+      }
+    }
+  }
+}`
+
 // V3 spec with response schema
 const responseSchemaV3SpecJSON = `{
   "openapi": "3.0.0",
@@ -537,6 +556,25 @@ const nullableRespV3SpecJSON = `{
             }
           }
         }
+      }
+    }
+  }
+}`
+
+// V3 spec with x-mcp-tool-hint extension
+const toolHintV3SpecJSON = `{
+  "openapi": "3.0.0",
+  "info": {"title": "Hint V3 API", "version": "1.0"},
+  "paths": {
+    "/hint": {
+      "get": {
+        "operationId": "getHint",
+        "x-mcp-tool-hint": {
+          "title": "Get Hint",
+          "readOnlyHint": true,
+          "idempotentHint": true
+        },
+        "responses": {"200": {"description": "OK"}}
       }
     }
   }
@@ -1384,4 +1422,42 @@ func TestGenerateToolSet(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGenerateToolSet_ToolHints(t *testing.T) {
+	// V3 spec
+	tempDirV3 := t.TempDir()
+	filePathV3 := filepath.Join(tempDirV3, "hint_v3.json")
+	err := os.WriteFile(filePathV3, []byte(toolHintV3SpecJSON), 0644)
+	require.NoError(t, err)
+	docV3, versionV3, err := LoadSwagger(filePathV3)
+	require.NoError(t, err)
+	require.Equal(t, VersionV3, versionV3)
+
+	toolSetV3, err := GenerateToolSet(docV3, versionV3, &config.Config{})
+	require.NoError(t, err)
+	require.Len(t, toolSetV3.Tools, 1)
+	hintV3 := toolSetV3.Tools[0].Annotations
+	require.NotNil(t, hintV3)
+	assert.Equal(t, "Get Hint", hintV3.Title)
+	assert.True(t, hintV3.ReadOnlyHint)
+	assert.True(t, hintV3.IdempotentHint)
+
+	// V2 spec
+	tempDirV2 := t.TempDir()
+	filePathV2 := filepath.Join(tempDirV2, "hint_v2.json")
+	err = os.WriteFile(filePathV2, []byte(toolHintV2SpecJSON), 0644)
+	require.NoError(t, err)
+	docV2, versionV2, err := LoadSwagger(filePathV2)
+	require.NoError(t, err)
+	require.Equal(t, VersionV2, versionV2)
+
+	toolSetV2, err := GenerateToolSet(docV2, versionV2, &config.Config{})
+	require.NoError(t, err)
+	require.Len(t, toolSetV2.Tools, 1)
+	hintV2 := toolSetV2.Tools[0].Annotations
+	require.NotNil(t, hintV2)
+	assert.Equal(t, "Get Hint", hintV2.Title)
+	assert.True(t, hintV2.ReadOnlyHint)
+	assert.True(t, hintV2.IdempotentHint)
 }

@@ -212,3 +212,25 @@ The `openapi-mcp` command accepts the following flags:
 ### Environment Variables
 
 *   `REQUEST_HEADERS`: Set this environment variable to a JSON string (e.g., `'{"X-Custom": "Value"}'`) to add custom headers to *all* outgoing requests to the target API.
+
+### MCP Tool Hints
+
+Use the vendor extension `x-mcp-tool-hint` inside any operation to provide additional hints to MCP clients. Example:
+
+```yaml
+paths:
+  /hint:
+    get:
+      x-mcp-tool-hint:
+        title: Get Hint
+        readOnlyHint: true
+        idempotentHint: true
+```
+
+The generated `Tool` will include these values in the `annotations` field. A Python client can access it as:
+
+```python
+tool = toolset[0]
+hint = tool.get('annotations', {})
+print(hint.get('title'))
+```

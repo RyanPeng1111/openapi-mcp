@@ -49,14 +49,24 @@ func (ts *ToolSet) GetAPIKeyDetails() (name, in string) {
 
 // Tool represents a single function or capability exposed via MCP.
 type Tool struct {
-	Name         string `json:"name"` // Corresponds to OpenAPI operationId or generated name
-	Description  string `json:"description,omitempty"`
-	InputSchema  Schema `json:"inputSchema"` // Renamed from Parameters, consolidate parameters/body here
-	OutputSchema Schema `json:"outputSchema,omitempty"`
+	Name         string           `json:"name"` // Corresponds to OpenAPI operationId or generated name
+	Description  string           `json:"description,omitempty"`
+	InputSchema  Schema           `json:"inputSchema"` // Renamed from Parameters, consolidate parameters/body here
+	OutputSchema Schema           `json:"outputSchema,omitempty"`
+	Annotations  *ToolAnnotations `json:"annotations,omitempty"`
 	// Entrypoint  string      `json:"entrypoint"`             // Removed for simplicity, schema should contain enough info?
 	// RequestBody RequestBody `json:"request_body,omitempty"` // Removed, info should be part of InputSchema
 	// HTTPMethod  string      `json:"http_method"`            // Removed for simplicity
 	// TODO: Add Response handling if needed by spec/client
+}
+
+// ToolAnnotations captures optional MCP annotation hints for a tool.
+type ToolAnnotations struct {
+	Title           string `json:"title,omitempty"`
+	ReadOnlyHint    bool   `json:"readOnlyHint,omitempty"`
+	DestructiveHint bool   `json:"destructiveHint,omitempty"`
+	IdempotentHint  bool   `json:"idempotentHint,omitempty"`
+	OpenWorldHint   bool   `json:"openWorldHint,omitempty"`
 }
 
 // RequestBody describes the expected request body for a tool.
