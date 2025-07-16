@@ -238,6 +238,14 @@ func generateToolSetV3(doc *openapi3.T, cfg *config.Config) (*mcp.ToolSet, error
 				InputSchema:  parametersSchema, // Use InputSchema, assuming it contains combined params/body
 				OutputSchema: outputSchema,
 			}
+
+			if ext, ok := op.Extensions["x-mcp-tool-hint"]; ok {
+				if hint, err := parseToolAnnotations(ext); err == nil {
+					tool.Annotations = hint
+				} else {
+					log.Printf("Warning: failed to parse x-mcp-tool-hint for %s %s: %v", method, rawPath, err)
+				}
+			}
 			toolSet.Tools = append(toolSet.Tools, tool)
 
 			// Store operation details for execution
@@ -621,6 +629,13 @@ func generateToolSetV2(doc *spec.Swagger, cfg *config.Config) (*mcp.ToolSet, err
 				Description:  toolDesc,
 				InputSchema:  parametersSchema,
 				OutputSchema: outputSchema,
+			}
+			if ext, ok := op.Extensions["x-mcp-tool-hint"]; ok {
+				if hint, err := parseToolAnnotations(ext); err == nil {
+					tool.Annotations = hint
+				} else {
+					log.Printf("Warning: failed to parse x-mcp-tool-hint for %s %s: %v", method, rawPath, err)
+				}
 			}
 			toolSet.Tools = append(toolSet.Tools, tool)
 
@@ -1101,6 +1116,21 @@ func mapJSONSchemaType(oapiType string) string {
 	default:
 		return "string"
 	}
+}
+
+func parseToolAnnotations(ext interface{}) (*mcp.ToolAnnotations, error) {
+	if ext == nil {
+		return nil, nil
+	}
+	b, err := json.Marshal(ext)
+	if err != nil {
+		return nil, err
+	}
+	var hint mcp.ToolAnnotations
+	if err := json.Unmarshal(b, &hint); err != nil {
+		return nil, err
+	}
+	return &hint, nil
 }
 
 // sliceContains checks if a string slice contains a specific string.
