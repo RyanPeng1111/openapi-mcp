@@ -415,6 +415,25 @@ const toolHintV2SpecJSON = `{
   }
 }`
 
+// V2 spec with x-mcp-tool-hint extension explicitly setting readOnlyHint false
+const toolHintV2FalseSpecJSON = `{
+  "swagger": "2.0",
+  "info": {"title": "Hint V2 API", "version": "1.0"},
+  "paths": {
+    "/hint": {
+      "get": {
+        "operationId": "getHintV2",
+        "x-mcp-tool-hint": {
+          "title": "Get Hint",
+          "readOnlyHint": false,
+          "idempotentHint": true
+        },
+        "responses": {"200": {"description": "OK"}}
+      }
+    }
+  }
+}`
+
 // V3 spec with response schema
 const responseSchemaV3SpecJSON = `{
   "openapi": "3.0.0",
@@ -572,6 +591,25 @@ const toolHintV3SpecJSON = `{
         "x-mcp-tool-hint": {
           "title": "Get Hint",
           "readOnlyHint": true,
+          "idempotentHint": true
+        },
+        "responses": {"200": {"description": "OK"}}
+      }
+    }
+  }
+}`
+
+// V3 spec with x-mcp-tool-hint extension explicitly setting readOnlyHint false
+const toolHintV3FalseSpecJSON = `{
+  "openapi": "3.0.0",
+  "info": {"title": "Hint V3 API", "version": "1.0"},
+  "paths": {
+    "/hint": {
+      "get": {
+        "operationId": "getHint",
+        "x-mcp-tool-hint": {
+          "title": "Get Hint",
+          "readOnlyHint": false,
           "idempotentHint": true
         },
         "responses": {"200": {"description": "OK"}}
@@ -1440,8 +1478,12 @@ func TestGenerateToolSet_ToolHints(t *testing.T) {
 	hintV3 := toolSetV3.Tools[0].Annotations
 	require.NotNil(t, hintV3)
 	assert.Equal(t, "Get Hint", hintV3.Title)
-	assert.True(t, hintV3.ReadOnlyHint)
-	assert.True(t, hintV3.IdempotentHint)
+	if assert.NotNil(t, hintV3.ReadOnlyHint) {
+		assert.True(t, *hintV3.ReadOnlyHint)
+	}
+	if assert.NotNil(t, hintV3.IdempotentHint) {
+		assert.True(t, *hintV3.IdempotentHint)
+	}
 
 	// V2 spec
 	tempDirV2 := t.TempDir()
@@ -1458,6 +1500,46 @@ func TestGenerateToolSet_ToolHints(t *testing.T) {
 	hintV2 := toolSetV2.Tools[0].Annotations
 	require.NotNil(t, hintV2)
 	assert.Equal(t, "Get Hint", hintV2.Title)
-	assert.True(t, hintV2.ReadOnlyHint)
-	assert.True(t, hintV2.IdempotentHint)
+	if assert.NotNil(t, hintV2.ReadOnlyHint) {
+		assert.True(t, *hintV2.ReadOnlyHint)
+	}
+	if assert.NotNil(t, hintV2.IdempotentHint) {
+		assert.True(t, *hintV2.IdempotentHint)
+	}
+}
+
+func TestGenerateToolSet_ToolHintsFalse(t *testing.T) {
+	// V3 spec with readOnlyHint false
+	tempDirV3 := t.TempDir()
+	filePathV3 := filepath.Join(tempDirV3, "hint_v3_false.json")
+	err := os.WriteFile(filePathV3, []byte(toolHintV3FalseSpecJSON), 0644)
+	require.NoError(t, err)
+	docV3, versionV3, err := LoadSwagger(filePathV3)
+	require.NoError(t, err)
+	require.Equal(t, VersionV3, versionV3)
+
+	toolSetV3, err := GenerateToolSet(docV3, versionV3, &config.Config{})
+	require.NoError(t, err)
+	hintV3 := toolSetV3.Tools[0].Annotations
+	require.NotNil(t, hintV3)
+	if assert.NotNil(t, hintV3.ReadOnlyHint) {
+		assert.False(t, *hintV3.ReadOnlyHint)
+	}
+
+	// V2 spec with readOnlyHint false
+	tempDirV2 := t.TempDir()
+	filePathV2 := filepath.Join(tempDirV2, "hint_v2_false.json")
+	err = os.WriteFile(filePathV2, []byte(toolHintV2FalseSpecJSON), 0644)
+	require.NoError(t, err)
+	docV2, versionV2, err := LoadSwagger(filePathV2)
+	require.NoError(t, err)
+	require.Equal(t, VersionV2, versionV2)
+
+	toolSetV2, err := GenerateToolSet(docV2, versionV2, &config.Config{})
+	require.NoError(t, err)
+	hintV2 := toolSetV2.Tools[0].Annotations
+	require.NotNil(t, hintV2)
+	if assert.NotNil(t, hintV2.ReadOnlyHint) {
+		assert.False(t, *hintV2.ReadOnlyHint)
+	}
 }
