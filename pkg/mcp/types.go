@@ -63,10 +63,10 @@ type Tool struct {
 // ToolAnnotations captures optional MCP annotation hints for a tool.
 type ToolAnnotations struct {
 	Title           string `json:"title,omitempty"`
-	ReadOnlyHint    bool   `json:"readOnlyHint,omitempty"`
-	DestructiveHint bool   `json:"destructiveHint,omitempty"`
-	IdempotentHint  bool   `json:"idempotentHint,omitempty"`
-	OpenWorldHint   bool   `json:"openWorldHint,omitempty"`
+	ReadOnlyHint    *bool  `json:"readOnlyHint,omitempty"`
+	DestructiveHint *bool  `json:"destructiveHint,omitempty"`
+	IdempotentHint  *bool  `json:"idempotentHint,omitempty"`
+	OpenWorldHint   *bool  `json:"openWorldHint,omitempty"`
 }
 
 // RequestBody describes the expected request body for a tool.
