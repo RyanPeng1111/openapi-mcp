@@ -778,13 +778,14 @@ func executeToolCall(params *ToolCallParams, toolSet *mcp.ToolSet, cfg *config.C
 		req.AddCookie(cookie)
 	}
 
-	log.Printf("[ExecuteToolCall] Sending request with headers: %v", req.Header)
-	if len(req.Cookies()) > 0 {
-		log.Printf("[ExecuteToolCall] Sending request with cookies: %+v", req.Cookies())
+	if cfg != nil && cfg.Debug {
+		log.Printf("[ExecuteToolCall] Sending request with headers: %v", req.Header)
+		if len(req.Cookies()) > 0 {
+			log.Printf("[ExecuteToolCall] Sending request with cookies: %+v", req.Cookies())
+		}
 	}
 
 	// --- Execute HTTP Request ---
-	log.Printf("[ExecuteToolCall] Sending request with headers: %v", req.Header)
 	timeout := time.Duration(cfg.TimeoutSpec)
 	if timeout <= 0 {
 		timeout = 30
@@ -862,7 +863,9 @@ func handleToolCallJSONRPC(connID string, req *jsonRPCRequest, toolSet *mcp.Tool
 				ToolCallID: fmt.Sprintf("%v", req.ID),
 			}
 		} else {
-			log.Printf("Received response body for tool '%s': %s", params.ToolName, string(bodyBytes))
+			if cfg != nil && cfg.Debug {
+				log.Printf("Received response body for tool '%s': %s", params.ToolName, string(bodyBytes))
+			}
 			// Check status code for API-level errors
 			if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 				// Put error details into the Content field so MCP clients can access them
