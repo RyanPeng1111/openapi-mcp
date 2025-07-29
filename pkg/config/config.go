@@ -40,6 +40,9 @@ type Config struct {
 	// Server-side request modification
 	CustomHeaders string // Comma-separated list of headers (e.g., "Header1:Value1,Header2:Value2") to add to outgoing requests.
 
+	// HTTP request timeout in seconds for outbound API calls
+	TimeoutSpec int
+
 	// Debug logging
 	Debug bool // Enable verbose debug logging
 }

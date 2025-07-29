@@ -49,6 +49,7 @@ func main() {
 	serverBaseURL := flag.String("base-url", "", "Manually override the server base URL")
 	defaultToolName := flag.String("name", "OpenAPI-MCP Tools", "Default name for the toolset")
 	defaultToolDesc := flag.String("desc", "Tools generated from OpenAPI spec", "Default description for the toolset")
+	timeoutSpec := flag.Int("timeout-spec", 30, "Request timeout in seconds for outbound API calls")
 	debug := flag.Bool("debug", false, "Enable verbose debug logging")
 
 	// Parse flags *after* defining them all
@@ -119,6 +120,7 @@ func main() {
 		DefaultToolName:   *defaultToolName,
 		DefaultToolDesc:   *defaultToolDesc,
 		CustomHeaders:     customHeadersEnv,
+		TimeoutSpec:       *timeoutSpec,
 		Debug:             *debug,
 	}
 

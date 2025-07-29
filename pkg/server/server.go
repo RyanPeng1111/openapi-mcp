@@ -785,7 +785,11 @@ func executeToolCall(params *ToolCallParams, toolSet *mcp.ToolSet, cfg *config.C
 
 	// --- Execute HTTP Request ---
 	log.Printf("[ExecuteToolCall] Sending request with headers: %v", req.Header)
-	client := &http.Client{Timeout: 30 * time.Second}
+	timeout := time.Duration(cfg.TimeoutSpec)
+	if timeout <= 0 {
+		timeout = 30
+	}
+	client := &http.Client{Timeout: timeout * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("[ExecuteToolCall] Error executing HTTP request: %v", err)
