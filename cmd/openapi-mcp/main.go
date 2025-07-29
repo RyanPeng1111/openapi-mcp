@@ -140,6 +140,10 @@ func main() {
 	}
 	log.Printf("MCP toolset generated with %d tools.\n", len(toolSet.Tools))
 
+	// --- Display final runtime settings ---
+	log.Printf("TimeoutSpec (seconds): %d", cfg.TimeoutSpec)
+	log.Printf("Debug mode enabled: %v", cfg.Debug)
+
 	// --- Start Server ---
 	addr := fmt.Sprintf(":%d", *port)
 	log.Printf("Starting MCP server on %s...", addr)
