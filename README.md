@@ -206,6 +206,7 @@ The `openapi-mcp` command accepts the following flags:
 | `--base-url`         | Manually override the target API server base URL detected from the spec.                                              | `string`      | (none)                           |
 | `--name`             | Default name for the generated MCP toolset (used if spec has no title).                                             | `string`      | "OpenAPI-MCP Tools"            |
 | `--desc`             | Default description for the generated MCP toolset (used if spec has no description).                                | `string`      | "Tools generated from OpenAPI spec" |
+| `--debug`            | Enable verbose debug logging.                                                         | `bool`        | `false`                         |
 
 **Note:** You can get this list by running the tool with the `--help` flag (e.g., `docker run --rm ckanthony/openapi-mcp:latest --help`).
 

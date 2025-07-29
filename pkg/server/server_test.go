@@ -441,7 +441,7 @@ func TestHttpMethodGetHandler(t *testing.T) {
 		// For the test, we just call cancel() after a short delay
 		// to simulate the connection ending gracefully.
 		time.AfterFunc(100*time.Millisecond, cancel) // Allow handler to start and write initial data
-		httpMethodGetHandler(rr, req)
+		httpMethodGetHandler(rr, req, nil)
 	}()
 
 	// Wait for the handler goroutine to finish.
@@ -1003,7 +1003,7 @@ func TestHttpMethodGetHandler_WriteErrors(t *testing.T) {
 			done := make(chan struct{})
 			go func() {
 				defer close(done)
-				httpMethodGetHandler(mockWriter, req)
+				httpMethodGetHandler(mockWriter, req, nil)
 			}()
 
 			// Wait for the handler goroutine to finish or timeout
@@ -1059,7 +1059,7 @@ func TestHttpMethodGetHandler_GoroutineErrors(t *testing.T) {
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			httpMethodGetHandler(mockWriter, req)
+			httpMethodGetHandler(mockWriter, req, nil)
 			log.Println("DEBUG: httpMethodGetHandler goroutine exited")
 		}()
 

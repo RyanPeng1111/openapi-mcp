@@ -39,6 +39,9 @@ type Config struct {
 
 	// Server-side request modification
 	CustomHeaders string // Comma-separated list of headers (e.g., "Header1:Value1,Header2:Value2") to add to outgoing requests.
+
+	// Debug logging
+	Debug bool // Enable verbose debug logging
 }
 
 // GetAPIKey resolves the API key value, prioritizing the environment variable over the direct flag.

@@ -49,6 +49,7 @@ func main() {
 	serverBaseURL := flag.String("base-url", "", "Manually override the server base URL")
 	defaultToolName := flag.String("name", "OpenAPI-MCP Tools", "Default name for the toolset")
 	defaultToolDesc := flag.String("desc", "Tools generated from OpenAPI spec", "Default description for the toolset")
+	debug := flag.Bool("debug", false, "Enable verbose debug logging")
 
 	// Parse flags *after* defining them all
 	flag.Parse()
@@ -118,6 +119,7 @@ func main() {
 		DefaultToolName:   *defaultToolName,
 		DefaultToolDesc:   *defaultToolDesc,
 		CustomHeaders:     customHeadersEnv,
+		Debug:             *debug,
 	}
 
 	log.Printf("Configuration loaded: %+v\n", cfg)
