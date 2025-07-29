@@ -116,7 +116,7 @@ func ServeMCP(addr string, toolSet *mcp.ToolSet, cfg *config.Config) error {
 		}
 
 		if r.Method == http.MethodGet {
-			httpMethodGetHandler(w, r) // Handle SSE connection setup
+			httpMethodGetHandler(w, r, cfg) // Handle SSE connection setup
 		} else if r.Method == http.MethodPost {
 			httpMethodPostHandler(w, r, toolSet, cfg) // Pass the cfg object here
 		} else {
@@ -134,9 +134,15 @@ func ServeMCP(addr string, toolSet *mcp.ToolSet, cfg *config.Config) error {
 }
 
 // httpMethodGetHandler handles the initial GET request to establish the SSE connection.
-func httpMethodGetHandler(w http.ResponseWriter, r *http.Request) {
+func httpMethodGetHandler(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 	connectionID := uuid.New().String()
 	log.Printf("SSE client connecting: %s (Assigning ID: %s)", r.RemoteAddr, connectionID)
+
+	if cfg != nil && cfg.Debug {
+		if hdr, err := json.Marshal(r.Header); err == nil {
+			log.Printf("DEBUG: GET request headers: %s", string(hdr))
+		}
+	}
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -300,6 +306,11 @@ func writeSSEEvent(w http.ResponseWriter, eventName string, data interface{}) er
 // httpMethodPostHandler handles incoming POST requests containing MCP messages.
 func httpMethodPostHandler(w http.ResponseWriter, r *http.Request, toolSet *mcp.ToolSet, cfg *config.Config) {
 	// --- Original Logic (Restored) ---
+	if cfg != nil && cfg.Debug {
+		if hdr, err := json.Marshal(r.Header); err == nil {
+			log.Printf("DEBUG: POST request headers: %s", string(hdr))
+		}
+	}
 	connID := r.Header.Get("X-Connection-ID") // Try header first
 	if connID == "" {
 		connID = r.URL.Query().Get("sessionId") // Fallback to query parameter
@@ -423,28 +434,40 @@ func httpMethodPostHandler(w http.ResponseWriter, r *http.Request, toolSet *mcp.
 		log.Printf("Processing JSON-RPC message for %s: Method=%s, ID=%v", connID, req.Method, reqID)
 		switch req.Method {
 		case "initialize":
-			incomingInitializeJSON, _ := json.Marshal(req)
-			log.Printf("DEBUG: Handling 'initialize' for %s. Incoming request: %s", connID, string(incomingInitializeJSON))
+			if cfg.Debug {
+				incomingInitializeJSON, _ := json.Marshal(req)
+				log.Printf("DEBUG: Handling 'initialize' for %s. Incoming request: %s", connID, string(incomingInitializeJSON))
+			}
 			respToSend = handleInitializeJSONRPC(connID, &req)
-			outgoingInitializeJSON, _ := json.Marshal(respToSend)
-			log.Printf("DEBUG: Prepared 'initialize' response for %s. Outgoing response: %s", connID, string(outgoingInitializeJSON))
+			if cfg.Debug {
+				outgoingInitializeJSON, _ := json.Marshal(respToSend)
+				log.Printf("DEBUG: Prepared 'initialize' response for %s. Outgoing response: %s", connID, string(outgoingInitializeJSON))
+			}
 		case "notifications/initialized":
 			log.Printf("Received 'notifications/initialized' notification for %s. Ignoring.", connID)
 			w.WriteHeader(http.StatusAccepted)
 			fmt.Fprintln(w, "Notification received.")
 			return // Return early, do not send anything on SSE channel
 		case "tools/list":
-			incomingListJSON, _ := json.MarshalIndent(req, "", "  ")
-			log.Printf("DEBUG: Handling 'tools/list' for %s. Incoming request: %s", connID, string(incomingListJSON))
+			if cfg.Debug {
+				incomingListJSON, _ := json.Marshal(req)
+				log.Printf("DEBUG: Handling 'tools/list' for %s. Incoming request: %s", connID, string(incomingListJSON))
+			}
 			respToSend = handleToolsListJSONRPC(connID, &req, toolSet)
-			outgoingListJSON, _ := json.MarshalIndent(respToSend, "", "  ")
-			log.Printf("DEBUG: Prepared 'tools/list' response for %s. Outgoing response: %s", connID, string(outgoingListJSON))
+			if cfg.Debug {
+				outgoingListJSON, _ := json.Marshal(respToSend)
+				log.Printf("DEBUG: Prepared 'tools/list' response for %s. Outgoing response: %s", connID, string(outgoingListJSON))
+			}
 		case "tools/call":
-			incomingCallJSON, _ := json.MarshalIndent(req, "", "  ")
-			log.Printf("DEBUG: Handling 'tools/call' for %s. Incoming request: %s", connID, string(incomingCallJSON))
+			if cfg.Debug {
+				incomingCallJSON, _ := json.Marshal(req)
+				log.Printf("DEBUG: Handling 'tools/call' for %s. Incoming request: %s", connID, string(incomingCallJSON))
+			}
 			respToSend = handleToolCallJSONRPC(connID, &req, toolSet, cfg, r.Header, r.Cookies())
-			outgoingCallJSON, _ := json.MarshalIndent(respToSend, "", "  ")
-			log.Printf("DEBUG: Prepared 'tools/call' response for %s. Outgoing response: %s", connID, string(outgoingCallJSON))
+			if cfg.Debug {
+				outgoingCallJSON, _ := json.Marshal(respToSend)
+				log.Printf("DEBUG: Prepared 'tools/call' response for %s. Outgoing response: %s", connID, string(outgoingCallJSON))
+			}
 		default:
 			log.Printf("Received unknown JSON-RPC method '%s' for %s", req.Method, connID)
 			respToSend = createJSONRPCError(reqID, -32601, fmt.Sprintf("Method not found: %s", req.Method), nil)
@@ -762,7 +785,11 @@ func executeToolCall(params *ToolCallParams, toolSet *mcp.ToolSet, cfg *config.C
 
 	// --- Execute HTTP Request ---
 	log.Printf("[ExecuteToolCall] Sending request with headers: %v", req.Header)
-	client := &http.Client{Timeout: 30 * time.Second}
+	timeout := time.Duration(cfg.TimeoutSpec)
+	if timeout <= 0 {
+		timeout = 30
+	}
+	client := &http.Client{Timeout: timeout * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("[ExecuteToolCall] Error executing HTTP request: %v", err)
